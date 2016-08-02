@@ -1,45 +1,29 @@
-#include <QtWidgets>
-#include <QFileDialog>
-
-#include <QMessageBox>
-//#include <QMediaPlayer>
-//#include <QVideoWidget>
-//#include <QMediaPlaylist>
-#include <time.h>
-
 #include "mainwindow.h"
-#include "graphicwindow.h"
-#include "graphmanager.h"
-#include "node.h"
-#include "edge.h"
 
-void error(QString text){
+void error(QString text)
+{
     QMessageBox msgBox;
-    msgBox.setWindowTitle("Error, error!");
+    msgBox.setWindowTitle("Error!");
     msgBox.setIcon(QMessageBox::Information);
     msgBox.setText(text);
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.exec();
 }
 
-//Destruktor
 MainWindow::~MainWindow()
 {
+
 }
 
-//Konstruktor - inicjalizuje główne okno
 MainWindow::MainWindow()
 {
-    //Ustawia widget
     QWidget *widget = new QWidget;
     setCentralWidget(widget);
 
-
-    //Ustawia parametry okna
-    setWindowTitle(tr("Graph"));
+    setWindowTitle(tr("Graph Editor"));
     setMinimumSize(600, 480);
-    this->showMaximized();
-    this->update();
+    showMaximized();
+    update();
 
     setStyleSheet("QLineEdit{background-color:#666666;font: bold;color:white} \
                    QListWidget{background-color:#666666;font: bold;color:white} \
@@ -57,87 +41,70 @@ MainWindow::MainWindow()
                    QMenu{background:#444444;color:white;font:bold}\
                    QMenu::item:selected{background:#666666}");
 
-
-                  //Tworzy menu
-                  createActions();
-                  createMenus();
-                  createToolbar();
-
-                  createSelector();
-                  createEditNode();
-                  createEditEdge();
-
+    createActions();
+    createMenus();
+    createSelector();
+    createEditNode();
+    createEditEdge();
 }
 
-//Akcja po kliknięciu File - > New
+/*file->new*/
 void MainWindow::newFile()
 {
-    clearAll();
-    //Usuń stare pole do rysowania
-    QList<GraphicWindow *> widgets = findChildren<GraphicWindow *>();
-    foreach(GraphicWindow * widget, widgets)
-    {
-        ///tutaj trzeba usunąć wierzchołki...
-        delete widget;
-    }
-    //Utwórz nowe pole do rysowania na podstawie danych z pliku
-    graphic = new GraphicWindow(this,this,0);
-    this->setCentralWidget(graphic);
-
-    showSelector();
-    toolbar->setVisible(true);
+    createGraphicWindow("");
 }
 
-//Akcja po kliknięciu File - > Open
+/*file->open*/
 void MainWindow::open()
 {
-    //Wywołaj okno Otwórz i pobierz lokalizację pliku
-    QString lokalizacja = QFileDialog::getOpenFileName(this,tr("Open.."),"/home/",tr("Pliki graph(*.graph)"));
-
-    //Jeśli nie wybrano to wyjdź z funkcji
-    if(lokalizacja.isEmpty())
+    QString directory = QFileDialog::getOpenFileName(this,tr("Open.."),"/home/",tr("Graph files(*.graph)"));
+    if(directory.isEmpty())
         return;
-    //W innym wypadku:
+
+    createGraphicWindow(directory);
+}
+
+/*create graphic view (empty or with loaded graph)*/
+void MainWindow::createGraphicWindow(QString directory)
+{
     clearAll();
-    //Usuń stare pole do rysowania
+
     QList<GraphicWindow *> widgets = findChildren<GraphicWindow *>();
     foreach(GraphicWindow * widget, widgets)
     {
-        ///tutaj trzeba usunąć wierzchołki...
         delete widget;
     }
-    //Utwórz nowe pole do rysowania na podstawie danych z pliku
-    graphic = new GraphicWindow(this,this,lokalizacja);
+
+    if(directory=="")
+    {
+        graphic = new GraphicWindow(this,this,0);
+    }
+    else
+    {
+        graphic = new GraphicWindow(this,this,directory);
+    }
     this->setCentralWidget(graphic);
 
     showSelector();
-    toolbar->setVisible(true);
 }
 
-//Akcja po kliknięciu File - > Save
+/*file->save*/
 void MainWindow::save()
 {
-    //Wywołaj okno Otwórz i pobierz lokalizację pliku
-    QString lokalizacja = QFileDialog::getSaveFileName(this,tr("Save.."),"/home/",tr("Pliki graph(*.graph)"));
-
-    //Jeśli nie wybrano to wyjdź z funkcji
-    if(lokalizacja.isEmpty())
+    QString directory = QFileDialog::getSaveFileName(this,tr("Save.."),"/home/",tr("Graph files(*.graph)"));
+    if(directory.isEmpty())
         return;
 
-    //W przeciwnym wypadku zainicjalizuj graf
-    QFile plik(lokalizacja);
-
-    //Jeżeli nie da rady otworzyć pliku to wyjdź z funkcji
-    if(!plik.open(QIODevice::WriteOnly | QIODevice::Text)){
+    QFile file(directory);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
         error("Problem z otwarciem pliku");
         return;
     }
 
-    QTextStream out(&plik);
+    QTextStream out(&file);
     GraphManager *graph=graphic->getMngr();
 
     out<<"NODES\n";
-
     foreach(Node *n,graph->getNodes()){
         out<<n->getName()<<" "
            <<QString::number(n->getWeight())<<" "
@@ -145,9 +112,7 @@ void MainWindow::save()
            <<QString::number(n->getColor().green())<<" "
            <<QString::number(n->getColor().blue())<<"\n";
     }
-
     out<<"EDGES\n";
-
     foreach(Edge *e,graph->getEdges()){
         out<<e->getSource()<<" "
            <<e->getDest()<<" "
@@ -157,192 +122,97 @@ void MainWindow::save()
 
 }
 
-//Akcja po kliknięciu About - > Twórcy
-void MainWindow::twor(){
-    //QMediaPlayer* player;
-    //player = new QMediaPlayer;
-    QMessageBox msgBox;
-         msgBox.setWindowTitle("AUTORZY!");
-         //msgBox.setIcon(QMessageBox::Information);
-         QPixmap exportSuccess("pobrane.jpg");
-         msgBox.setIconPixmap(exportSuccess);
-         msgBox.setText(trUtf8("Najlepsi z najlepszych z myślą o was zrobili ten cudowny program:"));
-         msgBox.setInformativeText(trUtf8("Nikodem Ha Nguyen Anh\nKamil Kiewel\nRobert Liberski\nDaniel Siwik"));
-         msgBox.setStandardButtons(QMessageBox::Ok);
-
-         //connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
-         //player->setMedia(QUrl::fromLocalFile("john.mp3"));
-         //player->setVolume(50);
-         //player->play();
-
-    msgBox.exec();
-    //player->stop();
-}
-
-//Łączy akcje z przyciskami
+/*connect menu buttons with actions*/
 void MainWindow::createActions()
 {
-    //Łączy zmienną newAct z akcją newFile
     newAct = new QAction(tr("&New"), this);
     newAct->setShortcuts(QKeySequence::New);
     newAct->setStatusTip(tr("Create a new file"));
     connect(newAct, &QAction::triggered, this, &MainWindow::newFile);
 
-    //Łączy zmienną openAct z akcją open
     openAct = new QAction(tr("&Open..."), this);
     openAct->setShortcuts(QKeySequence::Open);
     openAct->setStatusTip(tr("Open an existing file"));
     connect(openAct, &QAction::triggered, this, &MainWindow::open);
 
-    //Łączy zmienną saveAct z akcją save
     saveAct = new QAction(tr("&Save"), this);
     saveAct->setShortcuts(QKeySequence::Save);
     saveAct->setStatusTip(tr("Save the document to disk"));
     connect(saveAct, &QAction::triggered, this, &MainWindow::save);
 
-    //Łączy zmienną exitAct z akcją QWidget::close - czyli zamknięcie programu
     exitAct = new QAction(tr("E&xit"), this);
     exitAct->setShortcuts(QKeySequence::Quit);
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, &QAction::triggered, this, &QWidget::close);
-
-    //Łączy zmienną tworcy z akcją twor
-    tworcy=new QAction(tr("&Tworcy"), this);
-    tworcy->setStatusTip(tr("Cosik"));
-    connect(tworcy, &QAction::triggered, this, &MainWindow::twor);
-
 }
 
-//Inicjalizuje menu
+/*create file menu*/
 void MainWindow::createMenus()
 {
-    //Dodaje menu File
     fileMenu = menuBar()->addMenu(tr("&File"));
-    //Dodaje zmienne jako akcje do menu file
     fileMenu->addAction(newAct);
     fileMenu->addAction(openAct);
     fileMenu->addAction(saveAct);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
-    //Dodaje menu About
-    fileMenu = menuBar()->addMenu(tr("&About"));
-    //Dodaje pozycję twórcy do menu about
-    fileMenu->addAction(tworcy);
 }
 
-//inicjalizuje toolbar
-void MainWindow::createToolbar(){
-    //Stwórz toolbar
-    toolbar=addToolBar(tr("Edit"));
-    toolbar->setStyleSheet("background:#222222;""color:white");
-    //Stwórz comboboxa z algorytmami
-    algorithms=new QComboBox();
-    //Dodaj tego comboboxa do toolbara
-    algorithms->setMinimumHeight(20);
-    algorithms->setMaximumHeight(20);
-    toolbar->addWidget(algorithms);
-    //Dodaj pozycje do comboboxa
-    algorytmy.push_back("");           //pierwsza pusta
-    algorytmy.push_back("Najkrótsza ścieżka");                      //Najkrótsza ścieżka (Dijkstra)
-    algorytmy.push_back("Maksymalny przepływ");                     //Maksymalny przepływ (Ford-Fulkerson)
-    algorytmy.push_back("Minimalne drzewo rozpinające");            //Minimalne drzewo rozpinające (Kruskal)
-    algorytmy.push_back("Kolorowanie grafu");                       //Kolorowanie grafu
-    algorytmy.push_back("Najkrótsza ścieżka");                      //Najkrótsza ścieżka (Bellman-Ford)
-    algorytmy.push_back("Minimalne drzewo rozpinające");            //Minimalne drzewo rozpinające (Prim)
-    algorytmy.push_back("Znajdowanie ścieżki eulerowskiej");        //Znajdowanie ścieżki eulerowskiej (w czasie liniowym)
-    algorytmy.push_back("Znajdowanie mostów i punktów artykulacji");//Znajdowanie mostów i punktów artykulacji (wierzchołków rozdzielających)
-    algorytmy.push_back("Przeszukiwanie grafu");                    //Przeszukiwanie grafu (wszerz, wgłąb, uogólnione)
-    algorytmy.push_back("Maksymalny przepływ");                     //Maksymalny przepływ - przepychanie wstępne (preflow-push)
-    algorithms->addItems(algorytmy);
-    //Dodaj przycisk uruchom
-    uruchom = new QPushButton("Run algorithm",this);
-    uruchom->setMinimumHeight(22);
-    uruchom->setMaximumHeight(22);
-    connect(uruchom, SIGNAL (released()), this, SLOT(runAlgorithm()));
-    toolbar->addWidget(uruchom);
-    toolbar->addSeparator();
-    //dodaj przycisk "otwórz spis zawartości"
-    toolbar->addWidget(new QLabel("           "));
-    /*
-    openSelector = new QToolButton(this);
-    openSelector->setText("Zawartość");
-    openSelector->setCheckable(true);
-    openSelector->setMinimumHeight(22);
-    openSelector->setMaximumHeight(22);
-    connect(openSelector, SIGNAL (released()), this, SLOT(showSelector()));
-    toolbar->addWidget(openSelector);*/
-
-    toolbar->setVisible(false);
-}
-
-//akcja po wciśnięciu "uruchom"
-void MainWindow::runAlgorithm(){
-    //w ten sposób pobieramy VVVVVVVVVVVVVVVVVVVVVVVVV pozycje z comboboxa
-    //algorithms->currentIndex();
-
-    //pobieramy sobie wskaźnik do managera grafu i na nim dzialamy
-    GraphicWindow *poleZGrafem = this->findChild<GraphicWindow *>();
-    GraphManager *graph = poleZGrafem->getMngr();
-
-    if(algorithms->currentIndex()==0){
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Przyklad");
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText("Wybierz sobie najpierw funkcję typie");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.exec();
-    }
-    else if(algorithms->currentIndex()==1){ //djikstra
-        graph->runDjikstra();
-    }
-    else if(algorithms->currentIndex()==4){ //kolorowanie grafu
-        graph->runKolorowanie();
-    }
-
-}
-
-void MainWindow::clearAll(){
-
+/*clear all lists, line edits etc. */
+void MainWindow::clearAll()
+{
     activeNode=NULL;
     activeEdge=NULL;
 
     if(nodeNameLine->text()!="")
+    {
         nodeNameLine->clear();
+    }
     if(nodeWeightLine->text()!="")
+    {
         nodeWeightLine->clear();
+    }
+
+        //
     //if(edgeWeightLine->text()!="")
         //edgeWeightLine->clear();
     //if(addEdgeWeight->text()!="")
         //addEdgeWeight->clear();
+
     if(addNodeName->text()!="")
+    {
         addNodeName->clear();
+    }
+
     if(addNodeWeight->text()!="")
+    {
         addNodeWeight->clear();
+    }
 
-
-    if(nodesTable->count()>0){
+    if(nodesTable->count()>0)
+    {
         nodesTable->clear();
     }
-    if(edgesTable->count()>0){
+    if(edgesTable->count()>0)
+    {
         edgesTable->clear();
     }
-    if(sourceNodes->count()>0){
+    if(sourceNodes->count()>0)
+    {
         sourceNodes->clear();
     }
-    if(destNodes->count()>0){
+    if(destNodes->count()>0)
+    {
         destNodes->clear();
     }
-
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-void MainWindow::createEditNode(){
-    //Stwórz toolbar
+/*create node editor*/
+void MainWindow::createEditNode()
+{
     nodeEdit=new QToolBar(tr("Node edit"),this);
     nodeEdit->setStyleSheet("background:#222222;""color:white");
     this->addToolBar(Qt::LeftToolBarArea,nodeEdit);
     nodeEdit->setMovable(false);
-
     nodeEdit->addWidget(new QLabel("\nNode editor"));
     nodeEdit->addSeparator();
 
@@ -373,24 +243,29 @@ void MainWindow::createEditNode(){
     closeNodeEdit=new QPushButton("Close editor",this);
     connect(closeNodeEdit, SIGNAL (released()), this, SLOT(hideEditNode()));
     nodeEdit->addWidget(closeNodeEdit);
-
     hideEditNode();
 }
+
+/*hide node editor*/
 void MainWindow::hideEditNode(){
     nodeEdit->setVisible(false);
     removeNodeButton->setEnabled(false);
 }
+
+/*show node editor*/
 void MainWindow::showEditNode(){
     hideEditEdge();
-
     nodeEdit->setVisible(true);
     nodeNameLine->setText(activeNode->getName());
     nodeWeightLine->setText(QString::number(activeNode->getWeight()));
-
     removeNodeButton->setEnabled(true);
 }
-void MainWindow::setNodeName(){
-    if(sourceNodes->findText(nodeNameLine->text())==-1){
+
+/*set new name for selected node*/
+void MainWindow::setNodeName()
+{
+    if(sourceNodes->findText(nodeNameLine->text())==-1)
+    {
         QString oldName=activeNode->getName();
         nodesTable->currentItem()->setText(" Name: "+nodeNameLine->text()+" Weight: "+QString::number(activeNode->getWeight()));
         activeNode->setName(nodeNameLine->text());
@@ -411,8 +286,8 @@ void MainWindow::setNodeName(){
         destNodes2->setItemText(pos,activeNode->getName());
         destNodes2->update();
 
-        //krawędzie
-        for(int i=0;i<edgesTable->count();i++){
+        for(int i=0;i<edgesTable->count();i++)
+        {
             QListWidgetItem *item=edgesTable->item(i);
             QString text=item->text();
             text.replace(" "+oldName+" "," "+activeNode->getName()+" ");
@@ -420,37 +295,49 @@ void MainWindow::setNodeName(){
         }
 
     }
-    else if(nodeNameLine->text()==""){
-        error("Wprowadź najpierw nazwę");
+    else if(nodeNameLine->text()=="")
+    {
+        error("Type name first!");
     }
-    else{
-        error("Istnieje już wierzchołek z taką nazwą!");
+    else
+    {
+        error("There already is node with that name!");
     }
 }
-void MainWindow::setNodeWeight(){
-    if(nodeWeightLine->text()!=""){
+
+/*set new weight for selected node*/
+void MainWindow::setNodeWeight()
+{
+    if(nodeWeightLine->text()!="")
+    {
         nodesTable->currentItem()->setText(" Name: "+activeNode->getName()+" Weight: "+nodeWeightLine->text());
         activeNode->setWeight(nodeWeightLine->text().toInt());
     }
     else
-        error("Wprowadź najpierw wagę");
+        error("Type weight first!");
 }
-void MainWindow::setNodeColor(){
+
+/*set new color for selected node*/
+void MainWindow::setNodeColor()
+{
     QColorDialog *coldiag = new QColorDialog(activeNode->getColor());
     activeNode->setColor(coldiag->getColor());
     delete coldiag;
 }
-void MainWindow::setActiveNode(Node *n){
+
+/*select node*/
+void MainWindow::setActiveNode(Node *n)
+{
     activeNode=n;
 }
 
-void MainWindow::createEditEdge(){
-    //Stwórz toolbar
+/*create edge editor*/
+void MainWindow::createEditEdge()
+{
     edgeEdit=new QToolBar(tr("Edge edit"),this);
     edgeEdit->setStyleSheet("background:#222222;""color:white");
     this->addToolBar(Qt::LeftToolBarArea,edgeEdit);
     edgeEdit->setMovable(false);
-
     edgeEdit->addWidget(new QLabel("\nEdge editor"));
     edgeEdit->addSeparator();
 
@@ -466,7 +353,6 @@ void MainWindow::createEditEdge(){
     dir2->insertItem(0,QString("SOURCE_TO_DEST"));
     dir2->insertItem(1,QString("DEST_TO_SOURCE"));
     dir2->insertItem(2,QString("TWO_WAY"));
-
 
     connect(edgeSourceSet, SIGNAL (released()), this, SLOT(setEdgeSource()));
     connect(edgeDestSet, SIGNAL (released()), this, SLOT(setEdgeDest()));
@@ -500,7 +386,10 @@ void MainWindow::createEditEdge(){
 
     hideEditEdge();
 }
-void MainWindow::showEditEdge(){
+
+/*show edge editor*/
+void MainWindow::showEditEdge()
+{
     hideEditNode();
 
     edgeEdit->setVisible(true);
@@ -517,20 +406,30 @@ void MainWindow::showEditEdge(){
 
     removeEdgeButton->setEnabled(true);
 }
-void MainWindow::hideEditEdge(){
+
+/*hide edge editor*/
+void MainWindow::hideEditEdge()
+{
     edgeEdit->setVisible(false);
     removeEdgeButton->setEnabled(false);
 }
-void MainWindow::setEdgeWeight(){
-    if(edgeWeightLine->text()!=""){
+
+/*set new weight for selected edge*/
+void MainWindow::setEdgeWeight()
+{
+    if(edgeWeightLine->text()!="")
+    {
         QString item=" "+activeEdge->getSource();
-        if(activeEdge->getDirection()==SOURCE_TO_DEST){
+        if(activeEdge->getDirection()==SOURCE_TO_DEST)
+        {
             item+=" -> ";
         }
-        else if(activeEdge->getDirection()==DEST_TO_SOURCE){
+        else if(activeEdge->getDirection()==DEST_TO_SOURCE)
+        {
             item+=" <- ";
         }
-        else if(activeEdge->getDirection()==TWO_WAY){
+        else if(activeEdge->getDirection()==TWO_WAY)
+        {
             item+=" <-> ";
         }
         item+=activeEdge->getDest()+" Weight: "+edgeWeightLine->text();
@@ -539,26 +438,31 @@ void MainWindow::setEdgeWeight(){
         activeEdge->setWeight(edgeWeightLine->text().toInt());
     }
     else
-        error("Wprowadź najpierw wagę");
+        error("Type weight first!");
 }
-void MainWindow::setEdgeSource(){
 
-    for(int i=0;i<edgesTable->count();i++){
+/*set new source for selected edge*/
+void MainWindow::setEdgeSource()
+{
+    for(int i=0;i<edgesTable->count();i++)
+    {
         QString text=edgesTable->item(i)->text();
         QStringList list = text.split(" ");
         QString source = list.at(1);
         QString dest = list.at(3);
-        if(source==sourceNodes2->currentText()&&destNodes2->currentText()==dest){
-            error("Istnieje już taka krawędź");
+        if(source==sourceNodes2->currentText()&&destNodes2->currentText()==dest)
+        {
+            error("There already is edge between selected nodes!");
             return;
         }
-        if(dest==sourceNodes2->currentText()&&destNodes2->currentText()==source){
-            error("Istnieje już taka krawędź");
+        if(dest==sourceNodes2->currentText()&&destNodes2->currentText()==source)
+        {
+            error("There already is edge between selected nodes!");
             return;
         }
     }
 
-    Node *dest=activeEdge->destNode();
+    Node *dest=activeEdge->getDestNode();
     int weight=activeEdge->getWeight();
     Direction dir=activeEdge->getDirection();
 
@@ -569,27 +473,31 @@ void MainWindow::setEdgeSource(){
 
     graphic->getMngr()->addItem(new Edge(graphic->getMngr()->getNodeByName(sourceNodes2->currentText()),dest,weight,dir,graphic));
     graphic->scene()->addItem(graphic->getMngr()->getLastEdge());
-    graphic->getMngr()->edgeToMap(graphic->getMngr()->getLastEdge());
     activeEdge=graphic->getMngr()->getLastEdge();
 }
-void MainWindow::setEdgeDest(){
 
+/*set new destination for selected edge*/
+void MainWindow::setEdgeDest()
+{
     for(int i=0;i<edgesTable->count();i++){
+
         QString text=edgesTable->item(i)->text();
         QStringList list = text.split(" ");
         QString source = list.at(1);
         QString dest = list.at(3);
-        if(source==sourceNodes2->currentText()&&destNodes2->currentText()==dest){
-            error("Istnieje już taka krawędź");
+        if(source==sourceNodes2->currentText()&&destNodes2->currentText()==dest)
+        {
+            error("There already is edge between selected nodes!");
             return;
         }
-        if(dest==sourceNodes2->currentText()&&destNodes2->currentText()==source){
-            error("Istnieje już taka krawędź");
+        if(dest==sourceNodes2->currentText()&&destNodes2->currentText()==source)
+        {
+            error("There already is edge between selected nodes!");
             return;
         }
     }
 
-    Node *source=activeEdge->sourceNode();
+    Node *source=activeEdge->getSourceNode();
     int weight=activeEdge->getWeight();
     Direction dir=activeEdge->getDirection();
 
@@ -600,25 +508,30 @@ void MainWindow::setEdgeDest(){
 
     graphic->getMngr()->addItem(new Edge(source,graphic->getMngr()->getNodeByName(destNodes2->currentText()),weight,dir,graphic));
     graphic->scene()->addItem(graphic->getMngr()->getLastEdge());
-    graphic->getMngr()->edgeToMap(graphic->getMngr()->getLastEdge());
     activeEdge=graphic->getMngr()->getLastEdge();
 }
-void MainWindow::setEdgeDirection(){
+
+/*set new direction for selected edge*/
+void MainWindow::setEdgeDirection()
+{
     activeEdge->setDirection(static_cast<Direction>(dir2->currentIndex()));
 }
-void MainWindow::setActiveEdge(Edge *e){
+
+/*select edge*/
+void MainWindow::setActiveEdge(Edge *e)
+{
     activeEdge=e;
 }
 
-void MainWindow::createSelector(){
-    //Stwórz toolbar
+/*create selector (for selecting node or edge and adding node or edge)*/
+void MainWindow::createSelector()
+{
     selector=new QToolBar(tr("Selector"),this);
     selector->setStyleSheet("background:#222222;""color:white");
     this->addToolBar(Qt::RightToolBarArea,selector);
     selector->setMovable(false);
     selector->addSeparator();
 
-    //lista wierzchołków
     selector->addWidget(new QLabel("Nodes:"));
     nodesTable=new QListWidget();
     nodesTable->setMaximumWidth(250);
@@ -630,7 +543,6 @@ void MainWindow::createSelector(){
     selector->addWidget(removeNodeButton);
     selector->addSeparator();
 
-    //panel dodawania wierzchołka
     nodeAddPanel=new QGroupBox();
     QVBoxLayout *layout=new QVBoxLayout();
     layout->addWidget(new QLabel("Name: "));
@@ -645,10 +557,8 @@ void MainWindow::createSelector(){
     layout->addWidget(newNodeButton);
     nodeAddPanel->setLayout(layout);
     selector->addWidget(nodeAddPanel);
-
     selector->addSeparator();
 
-    //lista krawędzi
     selector->addWidget(new QLabel("\nEdges:"));
     edgesTable=new QListWidget();;
     edgesTable->setMaximumWidth(250);
@@ -660,7 +570,6 @@ void MainWindow::createSelector(){
     selector->addWidget(removeEdgeButton);
     selector->addSeparator();
 
-    //panel dodawania krawędzi
     edgeAddPanel=new QGroupBox();
     QVBoxLayout *layout2=new QVBoxLayout();
     layout2->addWidget(new QLabel("Source: "));
@@ -692,58 +601,81 @@ void MainWindow::createSelector(){
 
     hideSelector();
 }
-void MainWindow::showSelector(){
+
+/*show selector*/
+void MainWindow::showSelector()
+{
     //if(openSelector->isChecked())
         selector->setVisible(true);
     //else
         //hideSelector();
 }
-void MainWindow::hideSelector(){
+
+/*hide selector*/
+void MainWindow::hideSelector()
+{
     selector->setVisible(false);
 }
-void MainWindow::addNode(){
-    if(sourceNodes->findText(addNodeName->text())==-1 && addNodeWeight->text()!="" && addNodeName->text()!=""){
+
+/*add new node to graph (from panel)*/
+void MainWindow::addNode()
+{
+    if(sourceNodes->findText(addNodeName->text())==-1 && addNodeWeight->text()!="" && addNodeName->text()!="")
+    {
         graphic->addNode(addNodeName->text(),addNodeWeight->text().toInt());
     }
     else if(addNodeWeight->text()=="")
-        error("Wprowadz najpierw wagę");
+    {
+        error("Type weight first!");
+    }
     else if(addNodeName->text()=="")
-        error("Wprowadź najpierw nazwę");
+    {
+        error("Type name first!");
+    }
     else
-        error("Istnieje już wierzchołek o takiej nazwie!");
-
+    {
+        error("There already is node with that name!");
+    }
 }
-void MainWindow::addEdge(){
+
+/*add new edge to graph (from panel)*/
+void MainWindow::addEdge()
+{
     if(addEdgeWeight->text()=="")
-        error("Wprowadz najpierw wagę");
-    else{
-        //sprawdź czy istnieje:
-        for(int i=0;i<edgesTable->count();i++){
+    {
+        error("Type weight first!");
+    }
+    else
+    {
+        for(int i=0;i<edgesTable->count();i++)
+        {
             QString text=edgesTable->item(i)->text();
             QStringList list = text.split(" ");
             QString source = list.at(1);
             QString dest = list.at(3);
-            if(source==sourceNodes->currentText()&&destNodes->currentText()==dest){
-                error("Istnieje już taka krawędź");
+            if(source==sourceNodes->currentText()&&destNodes->currentText()==dest)
+            {
+                error("There already is edge between selected nodes!");
                 return;
             }
-            if(dest==sourceNodes->currentText()&&destNodes->currentText()==source){
-                error("Istnieje już taka krawędź");
+            if(dest==sourceNodes->currentText()&&destNodes->currentText()==source)
+            {
+                error("There already is edge between selected nodes!");
                 return;
             }
         }
-
 
         Node *s=graphic->getMngr()->getNodeByName(sourceNodes->currentText());
         Node *d=graphic->getMngr()->getNodeByName(destNodes->currentText());
         Direction dir=static_cast<Direction>(directionOfEdge->currentText().toInt());
         int weight=addEdgeWeight->text().toInt();
         graphic->addEdge(s,d,weight,dir);
-
     }
 }
-void MainWindow::addNode(Node *n){
 
+/*add new node to nodes list (when graph is loaded from file)*/
+void MainWindow::addNode(Node *n)
+{
     QString item=" Name: " +n->getName()+" Weight: "+QString::number(n->getWeight());
 
     nodesTable->addItem(new QListWidgetItem(item));
@@ -751,32 +683,34 @@ void MainWindow::addNode(Node *n){
     destNodes->addItem(QString(n->getName()));
     sourceNodes2->addItem(QString(n->getName()));
     destNodes2->addItem(QString(n->getName()));
-
-
 }
-void MainWindow::addEdge(Edge *e){
+
+/*add new edge to edges list (when graph is loaded from file)*/
+void MainWindow::addEdge(Edge *e)
+{
     QString item=" "+e->getSource();
-    if(e->getDirection()==SOURCE_TO_DEST){
+    if(e->getDirection()==SOURCE_TO_DEST)
+    {
         item+=" -> ";
     }
-    else if(e->getDirection()==DEST_TO_SOURCE){
+    else if(e->getDirection()==DEST_TO_SOURCE)
+    {
         item+=" <- ";
     }
-    else if(e->getDirection()==TWO_WAY){
+    else if(e->getDirection()==TWO_WAY)
+    {
         item+=" <-> ";
     }
     item+=e->getDest()+" Weight: "+QString::number(e->getWeight());
     edgesTable->addItem(new QListWidgetItem(item));
 }
-void MainWindow::removeNode(){
 
-
-
+/*remove node*/
+void MainWindow::removeNode()
+{
     QString name=nodesTable->currentItem()->text().split(" ").at(2);
-
     delete nodesTable->currentItem();
 
-    //znajdź wierzchołek w comboboxach i usuń
     int pos=sourceNodes->findText(name);
     sourceNodes->removeItem(pos);
 
@@ -792,32 +726,43 @@ void MainWindow::removeNode(){
     activeNode->removeThis();
     hideEditNode();
 }
-void MainWindow::removeEdge(){
+
+/*remove edge*/
+void MainWindow::removeEdge()
+{
     delete edgesTable->currentItem();
     activeEdge->removeThis();
     hideEditEdge();
 }
-void MainWindow::removeEdge(Edge *e){
+
+/*remove edge*/
+void MainWindow::removeEdge(Edge *e)
+{
     QString sourceNode=e->getSource();
     QString destNode=e->getDest();
 
-    for(int i=0;i<edgesTable->count();i++){
+    for(int i=0;i<edgesTable->count();i++)
+    {
         QString text=edgesTable->item(i)->text();
         QStringList list = text.split(" ");
         QString source = list.at(1);
         QString dest = list.at(3);
-        if(source==sourceNode && destNode==dest){
+        if(source==sourceNode && destNode==dest)
+        {
             delete edgesTable->item(i);
             continue;
         }
-        if(dest==sourceNode && destNode==source){
+        if(dest==sourceNode && destNode==source)
+        {
             delete edgesTable->item(i);
             continue;
         }
     }
 }
-void MainWindow::nodeItemClicked(QListWidgetItem *item){
-    //pobieramy sobie wskaźnik do managera grafu i na nim dzialamy
+
+/*select active node*/
+void MainWindow::nodeItemClicked(QListWidgetItem *item)
+{
     GraphicWindow *poleZGrafem = this->findChild<GraphicWindow *>();
     GraphManager *graph = poleZGrafem->getMngr();
 
@@ -828,8 +773,10 @@ void MainWindow::nodeItemClicked(QListWidgetItem *item){
     activeNode->selectThis();
     activeNode->update();
 }
-void MainWindow::edgeItemClicked(QListWidgetItem *item){
-    //pobieramy sobie wskaźnik do managera grafu i na nim dzialamy
+
+/*select active edge*/
+void MainWindow::edgeItemClicked(QListWidgetItem *item)
+{
     GraphicWindow *poleZGrafem = this->findChild<GraphicWindow *>();
     GraphManager *graph = poleZGrafem->getMngr();
 

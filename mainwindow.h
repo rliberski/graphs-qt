@@ -3,9 +3,17 @@
 
 #include <QMainWindow>
 #include <QWidget>
+#include <QtWidgets>
+#include <QFileDialog>
+#include <QMessageBox>
 
-class QMenu;        //używane w mainwindow
-class QAction;      //używane w mainwindow
+#include "graphicwindow.h"
+#include "graphmanager.h"
+#include "node.h"
+#include "edge.h"
+
+class QMenu;
+class QAction;
 class QLabel;
 class QToolBar;
 class QPushButton;
@@ -18,18 +26,16 @@ class QListWidgetItem;
 class QGroupBox;
 class QVBoxLayout;
 
-class Node;
-class Edge;
-class GraphManager;
-class GraphicWindow;
-
-class MainWindow : public QMainWindow{
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
+
 public:
-    MainWindow();           //Konstruktor
-    ~MainWindow();          //Destruktor
+    MainWindow();
+    ~MainWindow();
     void showEditNode();
     void showEditEdge();
+
     void addNode(Node *n);
     void addEdge(Edge *e);
 
@@ -37,13 +43,10 @@ public:
     void setActiveNode(Node *n);
     void setActiveEdge(Edge *e);
 
-
 private slots:
-    void newFile();         //Akcja po kliknięciu File - > New
-    void open();            //Akcja po kliknięciu File - > Open
-    void save();            //Akcja po kliknięciu File - > Save
-    void twor();
-    void runAlgorithm();    //Wykonywane przy wciśnięciu przycisku "uruchom algorytm"
+    void newFile();
+    void open();
+    void save();
 
     void hideEditNode();
     void setNodeName();
@@ -66,34 +69,27 @@ private slots:
     void edgeItemClicked(QListWidgetItem *item);
 
 private:
-    void createActions();   //Łączy akcje z przyciskami
-    void createMenus();     //Inicjalizuje menu
-    void createToolbar();   //Tworzy toolbar
+    void createActions();
+    void createMenus();
+    void createToolbar();
     void createEditNode();
     void createEditEdge();
     void createSelector();
-
+    void createGraphicWindow(QString directory);
     void clearAll();
 
     Node* activeNode;
     Edge* activeEdge;
     GraphicWindow *graphic;
 
-    //menu file
-    QMenu *fileMenu;        //Menu File
-    QAction *newAct;        //Akcja newFile
-    QAction *openAct;       //Akcja open
-    QAction *saveAct;       //Akcja save
-    QAction *exitAct;       //Akcja exit
-    QAction *tworcy;        //
+    /*file menu*/
+    QMenu *fileMenu;
+    QAction *newAct;
+    QAction *openAct;
+    QAction *saveAct;
+    QAction *exitAct;
 
-    //algorytmy
-    QToolBar *toolbar;
-    QComboBox *algorithms;
-    QStringList algorytmy;
-    QPushButton *uruchom;
-
-    //menu edit node
+    /*node editor*/
     QToolBar *nodeEdit;
     QLabel *nodeNameLabel;
     QLineEdit *nodeNameLine;
@@ -104,7 +100,7 @@ private:
     QPushButton *nodeColorEditor;
     QPushButton *closeNodeEdit;
 
-    //menu edit edge
+    /*edge editor*/
     QToolBar *edgeEdit;
     QLineEdit *edgeWeightLine;
     QPushButton *edgeSourceSet;
@@ -116,17 +112,17 @@ private:
     QComboBox *destNodes2;
     QComboBox *dir2;
 
-    //narzedzia
+    /*selector*/
     QToolBar *selector;
     QListWidget *nodesTable;
     QListWidget *edgesTable;
-    //panel dodawania wierzchołka
+    //node add panel
     QGroupBox *nodeAddPanel;
     QLineEdit *addNodeName;
     QLineEdit *addNodeWeight;
     QPushButton *newNodeButton;
     QPushButton *removeNodeButton;
-    //panel dodawania krawędzi
+    //edge add panel
     QGroupBox *edgeAddPanel;
     QComboBox *sourceNodes;
     QComboBox *destNodes;

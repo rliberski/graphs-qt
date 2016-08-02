@@ -2,18 +2,28 @@
 #define GRAPHICWINDOW_H
 
 #include <QGraphicsView>
+#include <math.h>
+#include <iostream>
+#include <QFile>
+#include <time.h>
+#include <QTextStream>
+#include <QKeyEvent>
+#include <QMetaEnum>
+
+#include "mainwindow.h"
+#include "graphmanager.h"
+#include "node.h"
 #include "edge.h"
 
 class GraphManager;
 class MainWindow;
-class Node;
-class Edge;
+enum Direction;
 
 class GraphicWindow : public QGraphicsView{
     Q_OBJECT
 public:
-    GraphicWindow(QWidget *parent,MainWindow *wind, int a);                                 //Tworzy puste pole do rysowania
-    GraphicWindow(QWidget *parent,MainWindow *wind, QString fileName = "");          //Tworzy pole do rysowania z grafem z pliku
+    GraphicWindow(QWidget *parent,MainWindow *wind, int a);
+    GraphicWindow(QWidget *parent,MainWindow *wind, QString fileName = "");
 
     GraphManager* getMngr();
     MainWindow* getWndw();
@@ -26,15 +36,12 @@ public:
     void addEdge(Node *source,Node *dest,int weight,Direction dir);
 
 protected:
-    void scaleView(qreal scaleFactor);                              //Skaluje pole
-
-    void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;            //Obsługa rolki myszy
+    void scaleView(qreal scaleFactor);
+    void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
 
 private:
-    GraphManager* mngr;                                             //Interfejs, gdzie przechowujemy dane o grafie
+    GraphManager* mngr;
     MainWindow *wndw;
 };
-
-
 
 #endif // GRAPHICWINDOW_H

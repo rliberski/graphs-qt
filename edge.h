@@ -2,6 +2,12 @@
 #define EDGE_H
 
 #include <QGraphicsItem>
+#include <QPainter>
+
+#include "node.h"
+#include "graphicwindow.h"
+#include "graphmanager.h"
+#include "mainwindow.h"
 
 class Node;
 class GraphicWindow;
@@ -12,50 +18,49 @@ enum Direction{
     TWO_WAY = 2
 };
 
-class Edge : public QGraphicsItem{
+class Edge : public QGraphicsItem
+{
 public:
-    Edge(Node *sourceNode,                              //Konstruktor -
-         Node *destNode,                                //arg1 i arg 2 - wskaźniki do wierzchołków
-         int w,                                         //arg3 - waga, arg4 - kierunek
+    Edge(Node *getSourceNode,
+         Node *getDestNode,
+         int w,
          Direction d,
-         GraphicWindow *g);
+         GraphicWindow *graphicWindow);
     ~Edge();
-    void removeThis();
-    Node *sourceNode() const;                           //Zwraca wierzchołek źródłowy
-    Node *destNode() const;                             //Zwraca wierzchołek docelowy
-    void adjust();                                      //Aktualizuje linię (?)
 
-    //getery
+    void removeThis();           
+    void select();
+    void unselect();
+    void adjust();
+
+    /*getters & setters*/
+    Node *getSourceNode() const;
+    Node *getDestNode() const;
     QString getSource();
     QString getDest();
     int getWeight();
     Direction getDirection();
-
-    //setery
     void setSource(Node *s);
     void setDest(Node *d);
     void setWeight(int w);
     void setDirection(Direction d);
 
-    void select();
-    void unselect();
-
-    void paint(                                         //Rysuje krawędź
+protected:
+    QRectF boundingRect() const Q_DECL_OVERRIDE;
+    void paint(
             QPainter *painter,
             const QStyleOptionGraphicsItem *option,
             QWidget *widget) Q_DECL_OVERRIDE;
 
-protected:
-    QRectF boundingRect() const Q_DECL_OVERRIDE;        //Zwraca obszar kolizji
-
 private:
-    Node *source, *dest;                                //Wskaźniki do swoich wierzchołków
+    Node *source;
+    Node *dest;
     QString sourceName;
     QString destName;
-    QPointF sourcePoint;                                //Współrzędna wierzchołka 1
-    QPointF destPoint;                                  //Współrzędna wierzchołka 2
-    int waga;                                           //Waga krawędzi
-    Direction direction;                                //Kierunek
+    QPointF sourcePoint;
+    QPointF destPoint;
+    int weight;
+    Direction direction;
     bool selected=false;
     GraphicWindow *graphic;
 };
