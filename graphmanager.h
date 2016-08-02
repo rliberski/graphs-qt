@@ -26,7 +26,7 @@ public:
     QVector<Edge*> getEdges();
 
     Node* getNodeByName(QString name);
-    Edge* getEdgeBySourceDest(QString source,QString dest);
+    Edge* getEdgeBySourceDest(QString source, QString dest);
 
     void unselectAllNodes();
     void unselectAllEdges();

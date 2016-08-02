@@ -228,7 +228,7 @@ void Node::selectThis()
     update();
 }
 
-/*unselect node*/
+/*unselect node */
 void Node::unselect()
 {
     selected=false;

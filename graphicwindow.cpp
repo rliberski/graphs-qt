@@ -149,7 +149,7 @@ void GraphicWindow::showEditNode(Node *n)
     wndw->showEditNode();
 }
 
-/*main window -> set active edge from parameter and show editor*/
+/*main window -> set active edge from parameter and show editor */
 void GraphicWindow::showEditEdge(Edge *e)
 {
     wndw->setActiveEdge(e);

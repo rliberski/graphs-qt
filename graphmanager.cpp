@@ -61,7 +61,7 @@ QVector<Node*> GraphManager::getNodes()
     return nodes;
 }
 
-/*return all edges*/
+/*return all edges */
 QVector<Edge*> GraphManager::getEdges()
 {
     return edges;

@@ -112,7 +112,7 @@ private:
     QComboBox *destNodes2;
     QComboBox *dir2;
 
-    /*selector*/
+    /*selector */
     QToolBar *selector;
     QListWidget *nodesTable;
     QListWidget *edgesTable;

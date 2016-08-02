@@ -15,7 +15,7 @@ class GraphicWindow;
 
 class Node : public QGraphicsItem{
 public:
-    Node(GraphicWindow *graphWidget,QString n,int w,QColor c);
+    Node(GraphicWindow *graphWidget, QString n, int w, QColor c);
     ~Node();
     void removeThis();
     void addEdge(Edge *edge);

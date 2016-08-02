@@ -8,24 +8,21 @@ Edge::Edge(Node *sourceNode, Node *destNode, int w, Direction d, GraphicWindow *
     setFlag(ItemIsSelectable);
     setFlag(ItemSendsGeometryChanges);
 
+    selected = false;
     sourceName = sourceNode -> getName();
     destName = destNode -> getName();
-
     source -> addEdge(this);
     dest -> addEdge(this);
-
     adjust();
-
     graphic -> newEdge(this);
 }
 
 Edge::~Edge()
 {
-    //if(source) delete source;
-    //if(dest) delete dest;
+
 }
 
-/*remove edge from view, from edges list and from graph manager*/
+/*remove edge from view, from edges list and from graph manager */
 void Edge::removeThis()
 {
     source -> removeEdge(this);

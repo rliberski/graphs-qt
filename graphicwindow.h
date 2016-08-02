@@ -33,7 +33,7 @@ public:
     void newNode(Node *n);
     void newEdge(Edge *e);
     void addNode(QString name,int weight);
-    void addEdge(Node *source,Node *dest,int weight,Direction dir);
+    void addEdge(Node *source, Node *dest, int weight, Direction dir);
 
 protected:
     void scaleView(qreal scaleFactor);

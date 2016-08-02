@@ -611,7 +611,7 @@ void MainWindow::showSelector()
         //hideSelector();
 }
 
-/*hide selector*/
+/*hide selector */
 void MainWindow::hideSelector()
 {
     selector->setVisible(false);

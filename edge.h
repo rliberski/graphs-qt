@@ -61,7 +61,7 @@ private:
     QPointF destPoint;
     int weight;
     Direction direction;
-    bool selected=false;
+    bool selected;
     GraphicWindow *graphic;
 };
 
